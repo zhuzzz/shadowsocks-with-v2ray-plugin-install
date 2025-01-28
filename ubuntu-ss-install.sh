@@ -83,10 +83,10 @@ install_mbedtls(){
         echo "\033[1;32mMbedTLS already installed, skip.\033[0m"
     else
         if [ ! -f mbedtls-$MBEDTLS_VER-gpl.tgz ];then
-            wget https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
+	    https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-2.16.12.tar.gz
         fi
-        tar xf mbedtls-$MBEDTLS_VER-gpl.tgz
-        cd mbedtls-$MBEDTLS_VER
+        tar xf mbedtls-2.16.12.tar.gz
+        cd mbedtls-2.16.12
         make SHARED=1 CFLAGS=-fPIC
         make DESTDIR=/usr install
         cd ..
@@ -150,7 +150,7 @@ ss_conf(){
     "timeout":300,
     "method":"aes-256-gcm",
     "plugin":"v2ray-plugin",
-    "plugin_opts":"server;tls;cert=/etc/letsencrypt/live/$domain/fullchain.pem;key=/etc/letsencrypt/live/$domain/privkey.pem;host=$domain;loglevel=none"
+    "plugin_opts":"host=$domain;server;tls;cert=/etc/letsencrypt/live/$domain/fullchain.pem;key=/etc/letsencrypt/live/$domain/privkey.pem;host=$domain;loglevel=debug"
 }
 EOF
     cat >/lib/systemd/system/shadowsocks.service << EOF
@@ -166,6 +166,10 @@ WantedBy=multi-user.target
 EOF
 }
 
+allow_ufw(){
+    ufw allow 80
+    ufw allow 443
+}
 get_cert(){
     if [ -f /etc/letsencrypt/live/$domain/fullchain.pem ];then
         echo "\033[1;32mcert already got, skip.\033[0m"
@@ -224,6 +228,7 @@ install_all(){
     install_ss
     install_v2
     ss_conf
+    allow_ufw
     get_cert
     start_ss
     remove_files
